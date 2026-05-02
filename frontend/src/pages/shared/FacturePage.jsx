@@ -17,7 +17,7 @@ const fmtTime = iso => iso
 
 // Build the full invoice HTML as a string (self-contained, no external deps except qrcode cdn)
 function buildInvoiceHTML(order) {
-  const qrValue = `DELIVEROS:ORDER:${order.id}`;
+  const qrValue = `LIVRO:ORDER:${order.id}`;
   const orderNum = String(order.id).padStart(6, "0");
   const now = fmtTime(new Date().toISOString());
 
@@ -33,7 +33,7 @@ function buildInvoiceHTML(order) {
 <html lang="fr">
 <head>
   <meta charset="UTF-8"/>
-  <title>Facture DeliverOS N° ${orderNum}</title>
+  <title>Facture Livr'O N° ${orderNum}</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -77,6 +77,14 @@ function buildInvoiceHTML(order) {
       body { padding: 20px; }
       @page { margin: 1cm; size: A4; }
     }
+    @media (max-width: 600px) {
+      body { padding: 16px; }
+      .parties { grid-template-columns: 1fr !important; }
+      .bottom { flex-direction: column !important; align-items: center !important; }
+      .price-table { width: 100% !important; }
+      table.details { font-size: 11px; }
+      table.details thead th, table.details tbody td { padding: 6px 8px; }
+    }
   </style>
 </head>
 <body>
@@ -84,9 +92,9 @@ function buildInvoiceHTML(order) {
   <!-- Header -->
   <div class="header">
     <div>
-      <div class="logo-name">DeliverOS</div>
+      <div class="logo-name">Livr'O</div>
       <div class="logo-sub">Système de gestion des livraisons</div>
-      <div class="logo-sub">contact@deliveros.ma · +212 5XX XX XX XX</div>
+      <div class="logo-sub">contact@livro.ma · +212 5XX XX XX XX</div>
     </div>
     <div style="text-align:right">
       <div class="invoice-label">FACTURE</div>
@@ -169,7 +177,7 @@ function buildInvoiceHTML(order) {
 
   <!-- Footer -->
   <div class="footer">
-    DeliverOS · Facture générée le ${now} · Ce document fait foi de reçu de livraison.
+    Livr'O · Facture générée le ${now} · Ce document fait foi de reçu de livraison.
   </div>
 
   <script>
@@ -210,7 +218,7 @@ export default function FacturePage({ orderId, onClose }) {
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement("a");
     a.href     = url;
-    a.download = `facture-deliveros-${String(order.id).padStart(6, "0")}.html`;
+    a.download = `facture-livro-${String(order.id).padStart(6, "0")}.html`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

@@ -53,8 +53,8 @@ export default function QRScanner({ onScan, onClose }) {
         const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const code = lib(img.data, img.width, img.height);
         if (code) {
-          // Expected format: DELIVEROS:ORDER:123
-          const match = code.data.match(/^DELIVEROS:ORDER:(\d+)$/);
+          // Expected format: LIVRO:ORDER:123
+          const match = code.data.match(/^LIVRO:ORDER:(\d+)$/);
           if (match) {
             onScan(parseInt(match[1]));
             return;
