@@ -6,6 +6,8 @@ import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 import Alert from "../../components/ui/Alert";
 import FacturePage from "../shared/FacturePage";
+import ProfilePage from "../../components/ui/ProfilePage";
+import NotificationsPage from "../../components/ui/NotificationsPage";
 import { clientOrderService } from "../../services/orderService";
 
 const STATUS_LABELS = {
@@ -44,7 +46,15 @@ function NewOrder({ onCreated }) {
       setForm(empty);
       onCreated?.();
     } catch(err) {
-      setError(err.response?.data?.detail || "Erreur lors de la création.");
+      console.error("Order creation error:", err);
+      console.error("Response data:", err.response?.data);
+      console.error("Response status:", err.response?.status);
+      const detail = err.response?.data?.detail;
+      if (Array.isArray(detail)) {
+        setError(detail.map(d => d.msg || d).join(" · "));
+      } else {
+        setError(detail || err.message || "Erreur lors de la création.");
+      }
     } finally { setLoading(false); }
   };
 
@@ -295,8 +305,10 @@ function MyOrders({ refresh }) {
 export default function ClientDashboard() {
   const [refreshKey,setRefreshKey] = useState(0);
   const navItems = [
-    { id:"orders", icon:"▣", label:"Mes commandes",     content:<MyOrders refresh={refreshKey} /> },
-    { id:"new",    icon:"⊕", label:"Nouvelle commande", content:<NewOrder onCreated={() => setRefreshKey(k=>k+1)} /> },
+    { id:"orders",        icon:"▣", label:"Mes commandes",     content:<MyOrders refresh={refreshKey} /> },
+    { id:"new",           icon:"⊕", label:"Nouvelle commande", content:<NewOrder onCreated={() => setRefreshKey(k=>k+1)} /> },
+    { id:"notifications", icon:"🔔", label:"Notifications",     content:<NotificationsPage /> },
+    { id:"profile",       icon:"👤", label:"Mon profil",        content:<ProfilePage /> },
   ];
   return <DashboardLayout role="client" navItems={navItems} />;
 }

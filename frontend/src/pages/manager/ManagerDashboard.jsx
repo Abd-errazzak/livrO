@@ -23,7 +23,7 @@ function AllOrders() {
 
   useEffect(()=>{
     managerOrderService.list(filter!=="all"?{status:filter}:{}).then(setOrders).finally(()=>setLoading(false));
-    api.get("/auth/users",{params:{role:"livreur"}}).then(r=>setLivreurs(r.data)).catch(()=>{});
+    api.get("/auth/list-users",{params:{role:"livreur"}}).then(r=>setLivreurs(r.data)).catch(()=>{});
   },[filter]);
 
   useEffect(()=>{

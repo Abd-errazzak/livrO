@@ -8,7 +8,7 @@ export const authService = {
     api.post("/auth/register", payload).then((r) => r.data),
 
   adminCreateUser: (payload) =>
-    api.post("/auth/users", payload).then((r) => r.data),
+    api.post("/auth/create-user", payload).then((r) => r.data),
 
   me: () => api.get("/auth/me").then((r) => r.data),
 

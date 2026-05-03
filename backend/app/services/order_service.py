@@ -100,6 +100,8 @@ def assign_order(db: Session, order_id: int, data: OrderAssign) -> Order:
     order.base_price      = base
     order.price_adjustment = adj
     order.total_price     = total
+    from app.services.notification_service import create_order_notification
+    create_order_notification(db, order, OrderStatus.assigned)
     db.commit()
     db.refresh(order)
     return order
@@ -153,6 +155,9 @@ def update_delivery_status(
     order.status = data.status
     if data.status == OrderStatus.delivered:
         order.delivered_at = datetime.utcnow()
+    # Notify the client
+    from app.services.notification_service import create_order_notification
+    create_order_notification(db, order, data.status)
     db.commit()
     db.refresh(order)
     return order

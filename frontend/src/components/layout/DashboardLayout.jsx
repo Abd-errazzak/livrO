@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import NotificationBell from "../ui/NotificationBell";
 
 const roleColors = {
   admin:   { accent: "#8B5CF6", glow: "rgba(139,92,246,0.15)" },
@@ -100,6 +101,8 @@ export default function DashboardLayout({ navItems, role }) {
             </div>
           )}
         </div>
+
+        <NotificationBell role={role} onClick={() => handleNavClick("notifications")} />
 
         <button onClick={handleLogout} style={{
           background:"transparent", border:"1px solid #2E3347", color:"#9CA3AF",

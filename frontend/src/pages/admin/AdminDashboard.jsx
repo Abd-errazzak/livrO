@@ -30,13 +30,27 @@ function Overview() {
   const [factureId, setFactureId] = useState(null);
 
   useEffect(() => {
-    Promise.all([
-      api.get("/auth/users/stats"),
-      api.get("/auth/users/recent-orders?limit=8"),
-    ])
-      .then(([s, o]) => { setStats(s.data); setOrders(o.data); })
-      .catch(() => setError("Impossible de charger les données."))
-      .finally(() => setLoading(false));
+    const load = async () => {
+      try {
+        const [s, o] = await Promise.all([
+          api.get("/auth/stats"),
+          api.get("/auth/recent-orders?limit=8"),
+        ]);
+        setStats(s.data);
+        setOrders(o.data);
+      } catch(err) {
+        const status = err?.response?.status;
+        const detail = err?.response?.data?.detail;
+        console.error("Admin overview error:", status, detail);
+        if (status === 403) setError("Accès refusé — vérifiez que votre compte a bien le rôle Admin.");
+        else if (status === 401) setError("Session expirée — veuillez vous reconnecter.");
+        else if (status === 404) setError("Endpoints introuvables — vérifiez que le backend est à jour.");
+        else setError(`Erreur ${status || "réseau"}: ${detail || err?.message || "Impossible de charger les données."}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
   }, []);
 
   if (loading) return <Loader />;
@@ -49,21 +63,21 @@ function Overview() {
       {/* Order stats */}
       <div style={{ marginBottom: 8, fontSize: 11, fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.08em" }}>Commandes</div>
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
-        <StatCard label="Total"        value={stats?.orders.total + ""}                               icon="📦" />
-        <StatCard label="En attente"   value={stats?.orders.pending + ""}      color="#F5A623"        icon="⏳" />
-        <StatCard label="En cours"     value={stats?.orders.in_progress + ""}  color="#4F8EF7"        icon="🚚" />
-        <StatCard label="Livrées"      value={stats?.orders.delivered + ""}    color="#2DD4A0"        icon="✓"  />
-        <StatCard label="Annulées"     value={stats?.orders.cancelled + ""}    color="#F75050"        icon="✕"  />
-        <StatCard label="Taux succès"  value={stats?.orders.success_rate + "%"} color="#2DD4A0" trend={stats?.orders.total > 0 ? `sur ${stats.orders.total} commandes` : ""} icon="📊" />
+        <StatCard label="Total"        value={stats?.orders.total ?? "0"}                               icon="📦" />
+        <StatCard label="En attente"   value={stats?.orders.pending ?? "0"}      color="#F5A623"        icon="⏳" />
+        <StatCard label="En cours"     value={stats?.orders.in_progress ?? "0"}  color="#4F8EF7"        icon="🚚" />
+        <StatCard label="Livrées"      value={stats?.orders.delivered ?? "0"}    color="#2DD4A0"        icon="✓"  />
+        <StatCard label="Annulées"     value={stats?.orders.cancelled ?? "0"}    color="#F75050"        icon="✕"  />
+        <StatCard label="Taux succès"  value={(stats?.orders.success_rate ?? "0") + "%"} color="#2DD4A0" trend={stats?.orders.total > 0 ? `sur ${stats.orders.total} commandes` : ""} icon="📊" />
       </div>
 
       {/* User stats */}
       <div style={{ marginBottom: 8, fontSize: 11, fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.08em" }}>Utilisateurs</div>
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 28 }}>
-        <StatCard label="Total"          value={stats?.users.total + ""}                        icon="👥" />
-        <StatCard label="Livreurs actifs" value={stats?.users.active_livreurs + ""} color="#F5A623" icon="🛵" />
-        <StatCard label="Managers"        value={stats?.users.managers + ""}        color="#4F8EF7" icon="◈"  />
-        <StatCard label="Clients"         value={stats?.users.clients + ""}         color="#2DD4A0" icon="◇"  />
+        <StatCard label="Total"          value={stats?.users.total ?? "0"}                        icon="👥" />
+        <StatCard label="Livreurs actifs" value={stats?.users.active_livreurs ?? "0"} color="#F5A623" icon="🛵" />
+        <StatCard label="Managers"        value={stats?.users.managers ?? "0"}        color="#4F8EF7" icon="◈"  />
+        <StatCard label="Clients"         value={stats?.users.clients ?? "0"}         color="#2DD4A0" icon="◇"  />
       </div>
 
       {/* Recent orders table */}
@@ -96,9 +110,16 @@ function Users({ onCreateUser }) {
   const load = useCallback(() => {
     setLoading(true);
     const params = filter !== "all" ? { role: filter } : {};
-    api.get("/auth/users", { params })
+    api.get("/auth/list-users", { params })
       .then(r => setUsers(r.data))
-      .catch(() => setError("Impossible de charger les utilisateurs."))
+      .catch(err => {
+        const s = err?.response?.status;
+        const d = err?.response?.data?.detail;
+        console.error("Admin users error:", s, d);
+        if (s === 403) setError("Accès refusé — rôle Admin requis.");
+        else if (s === 404) setError("Endpoint /users introuvable — backend à jour ?");
+        else setError(`Erreur ${s || "réseau"}: ${d || err?.message || "Impossible de charger les utilisateurs."}`);
+      })
       .finally(() => setLoading(false));
   }, [filter]);
 
@@ -107,7 +128,7 @@ function Users({ onCreateUser }) {
   const handleToggle = async (userId) => {
     setToggling(userId);
     try {
-      const updated = await api.patch(`/auth/users/${userId}/toggle-active`).then(r => r.data);
+      const updated = await api.patch(`/auth/toggle-user/${userId}`).then(r => r.data);
       setUsers(prev => prev.map(u => u.id === updated.id ? updated : u));
     } catch (err) {
       setError(err.response?.data?.detail || "Erreur lors de la modification.");
@@ -256,7 +277,7 @@ function Logs() {
   const [error,   setError]   = useState("");
 
   useEffect(() => {
-    api.get("/auth/users/recent-orders?limit=30")
+    api.get("/auth/recent-orders?limit=30")
       .then(r => setOrders(r.data))
       .catch(() => setError("Impossible de charger les journaux."))
       .finally(() => setLoading(false));
