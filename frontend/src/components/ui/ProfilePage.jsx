@@ -10,7 +10,7 @@ const ROLE_LABELS = { admin:"Admin", manager:"Manager", livreur:"Livreur", clien
 const ROLE_COLORS = { admin:"#8B5CF6", manager:"#4F8EF7", livreur:"#F5A623", client:"#2DD4A0" };
 
 export default function ProfilePage() {
-  const { user, login } = useAuth();
+  const { user, updateUser } = useAuth();
 
   // Profile form
   const [profile, setProfile]   = useState({ full_name: user?.full_name || "", phone: user?.phone || "" });
@@ -31,11 +31,18 @@ export default function ProfilePage() {
   const handleProfile = async e => {
     e.preventDefault(); setProfLoad(true);
     try {
-      await profileService.update({ full_name: profile.full_name, phone: profile.phone });
+      const updated = await profileService.update({ full_name: profile.full_name, phone: profile.phone });
+      // Update AuthContext + localStorage so topbar name updates immediately
+      updateUser(updated);
       setProfOk("Profil mis à jour avec succès !");
     } catch(err) {
-      const d = err.response?.data?.detail;
-      setProfErr(Array.isArray(d) ? d.map(x=>x.msg||x).join(" · ") : d || "Erreur.");
+      console.error("Profile update error:", err?.response?.status, err?.response?.data);
+      const d = err?.response?.data?.detail;
+      const status = err?.response?.status;
+      if (status === 405) setProfErr("Méthode non autorisée — le serveur ne supporte pas PATCH /auth/me.");
+      else if (status === 401) setProfErr("Session expirée — reconnectez-vous.");
+      else if (status === 422) setProfErr("Données invalides: " + (Array.isArray(d) ? d.map(x=>x.msg||x).join(", ") : d));
+      else setProfErr(Array.isArray(d) ? d.map(x=>x.msg||x).join(" · ") : d || `Erreur ${status || "réseau"}`);
     } finally { setProfLoad(false); }
   };
 
@@ -49,8 +56,12 @@ export default function ProfilePage() {
       setPwdOk("Mot de passe modifié avec succès !");
       setPwd({ current_password:"", new_password:"", confirm:"" });
     } catch(err) {
-      const d = err.response?.data?.detail;
-      setPwdErr(Array.isArray(d) ? d.map(x=>x.msg||x).join(" · ") : d || "Erreur.");
+      console.error("Password change error:", err?.response?.status, err?.response?.data);
+      const d = err?.response?.data?.detail;
+      const status = err?.response?.status;
+      if (status === 405) setPwdErr("Méthode non autorisée — le serveur ne supporte pas POST /auth/me/change-password.");
+      else if (status === 401) setPwdErr("Session expirée — reconnectez-vous.");
+      else setPwdErr(Array.isArray(d) ? d.map(x=>x.msg||x).join(" · ") : d || `Erreur ${status || "réseau"}`);
     } finally { setPwdLoad(false); }
   };
 
