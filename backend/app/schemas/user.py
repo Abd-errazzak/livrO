@@ -56,9 +56,9 @@ class UserOut(BaseModel):
     full_name: str
     email: str
     role: UserRole
-    phone: Optional[str]
-    is_active: bool
-    is_available: bool
+    phone: Optional[str] = None
+    is_active: bool = True
+    is_available: bool = True
     created_at: datetime
 
     model_config = {"from_attributes": True}

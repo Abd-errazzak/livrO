@@ -63,9 +63,17 @@ def update_profile(
     current_user: User = Depends(get_current_user),
 ):
     try:
-        return auth_service.update_profile(db, current_user, data)
-    except ValueError as e:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
+        if data.full_name is not None and data.full_name.strip():
+            current_user.full_name = data.full_name.strip()
+        if data.phone is not None:
+            current_user.phone = data.phone.strip() or None
+        db.commit()
+        db.refresh(current_user)
+        return current_user
+    except Exception as e:
+        db.rollback()
+        import traceback; traceback.print_exc()
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @router.post("/me/change-password", response_model=UserOut)
@@ -75,9 +83,21 @@ def change_password(
     current_user: User = Depends(get_current_user),
 ):
     try:
-        return auth_service.change_password(db, current_user, data)
-    except ValueError as e:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
+        from app.core.security import verify_password, hash_password
+        if not verify_password(data.current_password, current_user.hashed_password):
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Mot de passe actuel incorrect")
+        if len(data.new_password) < 8:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Le nouveau mot de passe doit contenir au moins 8 caractères")
+        current_user.hashed_password = hash_password(data.new_password)
+        db.commit()
+        db.refresh(current_user)
+        return current_user
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        import traceback; traceback.print_exc()
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 # ── Admin: create staff account ────────────────────────────────
