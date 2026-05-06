@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Livr'O API",
-    version="1.0.1",
+    version="1.1.0",
     description="Système de gestion des livraisons — FastAPI + PostgreSQL",
     lifespan=lifespan,
 )
@@ -50,4 +50,4 @@ app.include_router(notifications.router,  prefix=PREFIX)
 
 @app.get("/")
 def root():
-    return {"status": "ok", "app": "Livr'O API v1.0.1"}
+    return {"status": "ok", "app": "Livr'O API v1.1.0"}

@@ -172,7 +172,7 @@ export default function DashboardLayout({ navItems, role }) {
             })}
             <div style={{ flex:1 }} />
             <div style={{ padding:"12px 10px", borderTop:"1px solid #2E3347", marginTop:8 }}>
-              <div style={{ fontSize:10, color:"#6B7280" }}>Livr'O v1.0.1</div>
+              <div style={{ fontSize:10, color:"#6B7280" }}>Livr'O v1.1.0</div>
               {!isMobile && user?.full_name && (
                 <div style={{ fontSize:11, color:"#9CA3AF", marginTop:3, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                   {user.full_name}
