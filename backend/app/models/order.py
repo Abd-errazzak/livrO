@@ -42,6 +42,10 @@ class Order(Base):
     package_description = Column(Text, nullable=False)
     payment_type        = Column(Enum(PaymentType), nullable=False, default=PaymentType.sender)
 
+    # ── Google Maps locations (v1.0.2) ─────────────────────────
+    sender_location   = Column(String(500), nullable=True)   # Google Maps link or coords
+    receiver_location = Column(String(500), nullable=True)   # Google Maps link or coords
+
     # ── Pricing (v1.0.1) ───────────────────────────────────────
     base_price        = Column(Float, nullable=True)   # auto-calculated by manager
     price_adjustment  = Column(Float, nullable=True, default=0.0)  # manual +/-

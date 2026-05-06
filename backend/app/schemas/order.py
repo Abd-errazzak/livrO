@@ -17,6 +17,8 @@ class OrderBase(BaseModel):
     destination_city: str
     package_description: str
     payment_type:        PaymentType = PaymentType.sender
+    sender_location:     Optional[str] = None   # Google Maps link
+    receiver_location:   Optional[str] = None   # Google Maps link
 
 
 class OrderCreate(OrderBase):
@@ -66,9 +68,11 @@ class UserMini(BaseModel):
 
 
 class PricingOut(BaseModel):
-    base_price:       Optional[float]
-    price_adjustment: Optional[float]
-    total_price:      Optional[float]
+    base_price:        Optional[float]
+    price_adjustment:  Optional[float]
+    total_price:       Optional[float]
+    sender_location:   Optional[str]
+    receiver_location: Optional[str]
     model_config = {"from_attributes": True}
 
 
@@ -79,9 +83,11 @@ class OrderOut(OrderBase):
     livreur_id:       Optional[int]
     client:           Optional[UserMini]
     livreur:          Optional[UserMini]
-    base_price:       Optional[float]
-    price_adjustment: Optional[float]
-    total_price:      Optional[float]
+    base_price:        Optional[float]
+    price_adjustment:  Optional[float]
+    total_price:       Optional[float]
+    sender_location:   Optional[str]
+    receiver_location: Optional[str]
     created_at:       datetime
     updated_at:       datetime
     assigned_at:      Optional[datetime]
@@ -97,7 +103,9 @@ class OrderSummary(BaseModel):
     destination_city: str
     status:           OrderStatus
     payment_type:     PaymentType
-    total_price:      Optional[float]
-    created_at:       datetime
-    livreur:          Optional[UserMini]
+    total_price:       Optional[float]
+    sender_location:   Optional[str]
+    receiver_location: Optional[str]
+    created_at:        datetime
+    livreur:           Optional[UserMini]
     model_config = {"from_attributes": True}

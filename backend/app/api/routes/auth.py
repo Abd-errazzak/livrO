@@ -198,3 +198,40 @@ def recent_orders(
         }
         for o in orders
     ]
+
+
+# ── Resolve Google Maps short URL ─────────────────────────────
+import urllib.request
+import re as _re
+
+@router.get("/resolve-location")
+def resolve_location(url: str = Query(...)):
+    """
+    Resolves a Google Maps URL (including short links) and extracts coordinates.
+    Follows redirects to get the final URL, then extracts lat/lng.
+    """
+    try:
+        # Follow redirects to get final URL
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            final_url = resp.url
+
+        # Extract coords from final URL using all known patterns
+        patterns = [
+            r'@(-?\d+\.\d+),(-?\d+\.\d+)',           # @lat,lng
+            r'[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)',       # ?q=lat,lng
+            r'[?&]ll=(-?\d+\.\d+),(-?\d+\.\d+)',      # ?ll=lat,lng
+            r'!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)',        # !3dlat!4dlng
+            r'place\/(-?\d+\.\d+),(-?\d+\.\d+)',      # place/lat,lng
+        ]
+
+        for pattern in patterns:
+            m = _re.search(pattern, final_url)
+            if m:
+                lat, lng = float(m.group(1)), float(m.group(2))
+                return {"lat": lat, "lng": lng, "final_url": final_url, "resolved": True}
+
+        return {"resolved": False, "final_url": final_url, "error": "Coordinates not found in URL"}
+
+    except Exception as e:
+        return {"resolved": False, "error": str(e)}
